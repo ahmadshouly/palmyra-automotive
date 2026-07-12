@@ -1,6 +1,7 @@
 // PM2 process configuration for production.
 // Start with:  pm2 start ecosystem.config.cjs
-// The app listens on PORT (default 3000); put Nginx in front as a reverse proxy.
+// Runs on its own port (default 3100) so it won't clash with other apps on the VPS.
+// Override the port with:  PORT=3123 pm2 start ecosystem.config.cjs
 module.exports = {
   apps: [
     {
@@ -12,7 +13,7 @@ module.exports = {
       max_memory_restart: "512M",
       env: {
         NODE_ENV: "production",
-        PORT: 3000,
+        PORT: process.env.PORT || 3100,
       },
     },
   ],
