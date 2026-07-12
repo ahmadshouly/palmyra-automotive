@@ -32,6 +32,7 @@ const en = {
 
   // ---- Common ----
   "common.viewAll": "View all",
+  "common.edit": "Edit",
   "common.any": "Any",
   "common.select": "Select…",
   "common.previous": "Previous",
@@ -300,6 +301,7 @@ const en = {
 
   // ---- Sell (admin only) ----
   "meta.sell": "Add vehicle",
+  "meta.editListing": "Edit listing",
   "sell.title": "Add a vehicle to {name}",
   "sell.sub": "Decode the VIN, describe the vehicle, set the price — the listing goes live immediately.",
   "sell.importTitle": "Import from URL",
@@ -345,6 +347,10 @@ const en = {
   "sell.publishNote": "The listing is published immediately after submission.",
   "sell.submit": "Publish listing",
   "sell.submitting": "Publishing…",
+  "sell.update": "Save changes",
+  "sell.keepPhotos": "Leave the photo field empty to keep the current photos.",
+  "sell.editTitle": "Edit listing",
+  "sell.editSub": "Update the vehicle details, then save your changes.",
   "sell.error.year": "Please enter a valid year.",
   "sell.error.mileage": "Please enter a valid mileage.",
   "sell.error.price": "Please enter a valid price.",
@@ -614,6 +620,7 @@ const ar: typeof en = {
   "footer.rights": "جميع الحقوق محفوظة.",
 
   "common.viewAll": "عرض الكل",
+  "common.edit": "تعديل",
   "common.any": "الكل",
   "common.select": "اختر…",
   "common.previous": "السابق",
@@ -877,6 +884,7 @@ const ar: typeof en = {
 
   // ---- Sell (admin only) ----
   "meta.sell": "إضافة سيارة",
+  "meta.editListing": "تعديل الإعلان",
   "sell.title": "أضف سيارة إلى {name}",
   "sell.sub": "أدخل رقم الهيكل لفك الترميز، صف السيارة وحدّد السعر — يُنشر الإعلان فورًا.",
   "sell.importTitle": "استيراد من رابط",
@@ -922,6 +930,10 @@ const ar: typeof en = {
   "sell.publishNote": "يُنشر الإعلان فورًا بعد الإرسال.",
   "sell.submit": "نشر الإعلان",
   "sell.submitting": "جارٍ النشر…",
+  "sell.update": "حفظ التغييرات",
+  "sell.keepPhotos": "اترك حقل الصور فارغًا للإبقاء على الصور الحالية.",
+  "sell.editTitle": "تعديل الإعلان",
+  "sell.editSub": "حدّث بيانات السيارة، ثم احفظ التغييرات.",
   "sell.error.year": "يرجى إدخال سنة صالحة.",
   "sell.error.mileage": "يرجى إدخال عدد كيلومترات صالح.",
   "sell.error.price": "يرجى إدخال سعر صالح.",

@@ -98,6 +98,9 @@ export default async function AdminListingsPage({
                 <p className="mt-2 line-clamp-2 text-sm text-emerald-800">{l.description}</p>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Link href={`/listings/${l.id}/edit`} className="btn-outline btn-sm">
+                    {t("common.edit")}
+                  </Link>
                   {status !== "ACTIVE" && status !== "SOLD" && (
                     <form action={moderateListingAction.bind(null, l.id)}>
                       <input type="hidden" name="decision" value="approve" />

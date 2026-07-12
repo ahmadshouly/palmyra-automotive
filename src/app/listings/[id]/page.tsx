@@ -294,6 +294,11 @@ export default async function ListingDetailPage({ params, searchParams }: Props)
                 </Link>.
               </div>
             )}
+            {staff && (
+              <Link href={`/listings/${listing.id}/edit`} className="btn-outline mt-4 w-full">
+                {t("common.edit")}
+              </Link>
+            )}
           </div>
         </aside>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BODY_STYLES,
   CONDITIONS,
@@ -15,8 +15,45 @@ import { createListingAction } from "@/app/actions/listings";
 
 type DecodeState = { status: "idle" | "loading" | "done" | "error"; message?: string };
 
-export default function SellForm({ error, locale }: { error?: string; locale: Locale }) {
+export type ListingInitial = {
+  make: string;
+  model: string;
+  year: number;
+  mileage: number;
+  bodyStyle: string;
+  fuelType: string;
+  transmission: string;
+  drivetrain: string;
+  engine: string | null;
+  exteriorColor: string;
+  interiorColor: string | null;
+  condition: string;
+  ownerCount: number;
+  accidentFree: boolean;
+  title: string;
+  description: string;
+  vin: string | null;
+  price: number;
+  city: string;
+  state: string;
+  tier: string;
+  features: string[];
+  images: string[];
+};
+
+export default function SellForm({
+  error,
+  locale,
+  initial,
+  action,
+}: {
+  error?: string;
+  locale: Locale;
+  initial?: ListingInitial;
+  action?: (formData: FormData) => void | Promise<void>;
+}) {
   const t = makeT(locale);
+  const isEdit = !!initial;
   const formRef = useRef<HTMLFormElement>(null);
   const [decode, setDecode] = useState<DecodeState>({ status: "idle" });
   const [importState, setImportState] = useState<DecodeState>({ status: "idle" });
@@ -40,6 +77,42 @@ export default function SellForm({ error, locale }: { error?: string; locale: Lo
       box.checked = set.has(box.value);
     });
   }
+
+  // Prefill every field when editing an existing listing.
+  useEffect(() => {
+    if (!initial) return;
+    const form = formRef.current;
+    if (!form) return;
+    const scalars: [string, string | number | null][] = [
+      ["make", initial.make],
+      ["model", initial.model],
+      ["year", initial.year],
+      ["mileage", initial.mileage],
+      ["bodyStyle", initial.bodyStyle],
+      ["fuelType", initial.fuelType],
+      ["transmission", initial.transmission],
+      ["drivetrain", initial.drivetrain],
+      ["engine", initial.engine],
+      ["exteriorColor", initial.exteriorColor],
+      ["interiorColor", initial.interiorColor],
+      ["condition", initial.condition],
+      ["ownerCount", initial.ownerCount],
+      ["title", initial.title],
+      ["description", initial.description],
+      ["vin", initial.vin],
+      ["price", initial.price],
+      ["city", initial.city],
+      ["state", initial.state],
+    ];
+    for (const [name, value] of scalars) setField(name, value ?? "");
+    checkFeatures(initial.features ?? []);
+    const acc = form.elements.namedItem("accidentFree");
+    if (acc instanceof HTMLInputElement) acc.checked = !!initial.accidentFree;
+    form.querySelectorAll<HTMLInputElement>('input[name="tier"]').forEach((r) => {
+      r.checked = r.value === initial.tier;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
 
   async function importFromUrl() {
     const urlEl = formRef.current?.elements.namedItem("importUrl");
@@ -138,7 +211,7 @@ export default function SellForm({ error, locale }: { error?: string; locale: Lo
   return (
     <form
       ref={formRef}
-      action={createListingAction}
+      action={action ?? createListingAction}
       onSubmit={() => setSubmitting(true)}
       className="space-y-8"
     >
@@ -149,6 +222,7 @@ export default function SellForm({ error, locale }: { error?: string; locale: Lo
       )}
 
       {/* Import from URL */}
+      {!isEdit && (
       <section className="card border-brand-200 bg-brand-50/60 p-6">
         <h2 className="text-lg font-bold text-emerald-950">{t("sell.importTitle")}</h2>
         <p className="mt-1 text-sm text-emerald-600">{t("sell.importSub")}</p>
@@ -203,6 +277,7 @@ export default function SellForm({ error, locale }: { error?: string; locale: Lo
         <input type="hidden" name="sourceRef" value={importMeta.ref ?? ""} />
         <input type="hidden" name="sourceUrl" value={importMeta.url ?? ""} />
       </section>
+      )}
 
       {/* VIN */}
       <section className="card p-6">
@@ -341,8 +416,16 @@ export default function SellForm({ error, locale }: { error?: string; locale: Lo
           </div>
           <div>
             <label className="label">{t("sell.photos")}</label>
+            {isEdit && initial!.images.length > 0 && (
+              <div className="mb-2 flex gap-2 overflow-x-auto">
+                {initial!.images.slice(0, 6).map((src) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={src} src={src} alt="" className="h-16 w-24 shrink-0 rounded-lg border border-emerald-100 object-cover" />
+                ))}
+              </div>
+            )}
             <input name="photos" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple className="input file:me-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white" />
-            <p className="mt-1 text-xs text-emerald-600">{t("sell.photosNote")}</p>
+            <p className="mt-1 text-xs text-emerald-600">{isEdit ? t("sell.keepPhotos") : t("sell.photosNote")}</p>
           </div>
         </div>
       </section>
@@ -385,9 +468,9 @@ export default function SellForm({ error, locale }: { error?: string; locale: Lo
       </section>
 
       <div className="flex items-center justify-between gap-4">
-        <p className="text-xs text-emerald-600">{t("sell.publishNote")}</p>
+        <p className="text-xs text-emerald-600">{isEdit ? t("sell.keepPhotos") : t("sell.publishNote")}</p>
         <button type="submit" disabled={submitting} className="btn-primary px-8 py-3">
-          {submitting ? t("sell.submitting") : t("sell.submit")}
+          {submitting ? t("sell.submitting") : isEdit ? t("sell.update") : t("sell.submit")}
         </button>
       </div>
     </form>

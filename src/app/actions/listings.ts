@@ -192,6 +192,108 @@ export async function createListingAction(formData: FormData) {
   redirect(`/listings/${listing.id}?created=1`);
 }
 
+export async function updateListingAction(listingId: string, formData: FormData) {
+  // Only administrators can edit car listings.
+  const user = await requireUser(["ADMIN"]);
+
+  const existing = await db.listing.findUnique({ where: { id: listingId } });
+  if (!existing) redirect("/admin/listings");
+
+  const str = (k: string) => String(formData.get(k) ?? "").trim();
+  const num = (k: string) => Number.parseInt(str(k).replace(/[^\d]/g, ""), 10);
+
+  const title = str("title");
+  const description = str("description");
+  const make = str("make");
+  const model = str("model");
+  const year = num("year");
+  const price = num("price");
+  const mileage = num("mileage");
+  const bodyStyle = str("bodyStyle");
+  const fuelType = str("fuelType");
+  const transmission = str("transmission");
+  const drivetrain = str("drivetrain");
+  const condition = str("condition");
+  const exteriorColor = str("exteriorColor");
+  const interiorColor = str("interiorColor") || null;
+  const engine = str("engine") || null;
+  const vin = str("vin").toUpperCase() || null;
+  const city = str("city");
+  const state = str("state");
+  const tier = ["FREE", "PREMIUM", "ULTIMATE"].includes(str("tier")) ? str("tier") : existing.tier;
+  const features = formData.getAll("features").map(String).slice(0, 40);
+  const accidentFree = formData.get("accidentFree") === "on";
+  const ownerCount = Math.min(Math.max(num("ownerCount") || 1, 1), 15);
+
+  const fail = (msg: string) =>
+    redirect(`/listings/${listingId}/edit?error=${encodeURIComponent(msg)}`);
+
+  if (title.length < 5) fail("Title must be at least 5 characters.");
+  if (description.length < 20) fail("Description must be at least 20 characters.");
+  if (!make || !model) fail("Make and model are required.");
+  if (!Number.isFinite(year) || year < 1950 || year > new Date().getFullYear() + 1) fail("Enter a valid year.");
+  if (!Number.isFinite(price) || price < 100 || price > 10_000_000) fail("Enter a valid price.");
+  if (!Number.isFinite(mileage) || mileage < 0 || mileage > 1_500_000) fail("Enter a valid mileage.");
+  if (!(BODY_STYLES as readonly string[]).includes(bodyStyle)) fail("Select a body style.");
+  if (!(FUEL_TYPES as readonly string[]).includes(fuelType)) fail("Select a fuel type.");
+  if (!(TRANSMISSIONS as readonly string[]).includes(transmission)) fail("Select a transmission.");
+  if (!(DRIVETRAINS as readonly string[]).includes(drivetrain)) fail("Select a drivetrain.");
+  if (!(CONDITIONS as readonly string[]).includes(condition)) fail("Select a condition.");
+  if (!exteriorColor) fail("Exterior color is required.");
+  if (!city || !state) fail("Location (city and state) is required.");
+  if (vin && !/^[A-HJ-NPR-Z0-9]{11,17}$/.test(vin)) fail("VIN must be 11-17 characters (no I, O, Q).");
+
+  // Duplicate VIN detection — one live listing per VIN (excluding this listing).
+  if (vin) {
+    const dup = await db.listing.findFirst({
+      where: { vin, status: { in: ["PENDING", "ACTIVE"] }, NOT: { id: listingId } },
+    });
+    if (dup) fail("A live listing with this VIN already exists (duplicate detection).");
+  }
+
+  // Photos: replace only when new files are uploaded; otherwise keep the current ones.
+  let images = existing.images;
+  const photos = (formData.getAll("photos") as File[]).filter((f) => f instanceof File && f.size > 0);
+  if (photos.length > 0) {
+    const urls = await savePhotos(listingId, photos);
+    if (urls.length > 0) images = JSON.stringify(urls);
+  }
+
+  await db.listing.update({
+    where: { id: listingId },
+    data: {
+      title,
+      description,
+      tier,
+      price,
+      vin,
+      make,
+      model,
+      year,
+      mileage,
+      bodyStyle,
+      fuelType,
+      transmission,
+      drivetrain,
+      exteriorColor,
+      interiorColor,
+      engine,
+      condition,
+      accidentFree,
+      ownerCount,
+      city,
+      state,
+      features: JSON.stringify(features),
+      images,
+    },
+  });
+
+  await audit(user.id, "LISTING_UPDATED", "Listing", listingId, title);
+  revalidatePath("/listings");
+  revalidatePath(`/listings/${listingId}`);
+  redirect(`/listings/${listingId}?updated=1`);
+}
+
 export async function archiveListingAction(listingId: string) {
   const user = await requireUser();
   const listing = await db.listing.findUnique({ where: { id: listingId } });
