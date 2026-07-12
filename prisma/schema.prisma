@@ -1,0 +1,206 @@
+// Prisma schema — Car marketplace platform
+// SQLite for local development; switch provider to "postgresql" for production.
+// (String fields are used instead of enums for SQLite compatibility —
+//  allowed values are defined in src/lib/constants.ts)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  phone          String?
+  role           String   @default("BUYER") // BUYER | SELLER | DEALER | INSPECTOR | LOGISTICS | FINANCE | MODERATOR | ADMIN
+  status         String   @default("ACTIVE") // ACTIVE | SUSPENDED
+  verified       Boolean  @default(false)
+  dealershipName String?
+  city           String?
+  state          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  listings      Listing[]
+  favorites     Favorite[]
+  conversations Conversation[] @relation("BuyerConversations")
+  messages      Message[]
+  offers        Offer[]
+  inspections   Inspection[]   @relation("InspectorJobs")
+  savedSearches SavedSearch[]
+  testDrives    TestDrive[]
+  auditLogs     AuditLog[]
+}
+
+model Listing {
+  id            String    @id @default(cuid())
+  sellerId      String
+  seller        User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  status        String    @default("PENDING") // DRAFT | PENDING | ACTIVE | SOLD | REJECTED | ARCHIVED
+  tier          String    @default("FREE") // FREE | PREMIUM | ULTIMATE
+  rejectReason  String?
+  price         Int // in whole currency units
+  vin           String?
+  make          String
+  model         String
+  year          Int
+  mileage       Int
+  bodyStyle     String
+  fuelType      String
+  transmission  String
+  drivetrain    String
+  exteriorColor String
+  interiorColor String?
+  engine        String?
+  condition     String // NEW | LIKE_NEW | EXCELLENT | GOOD | FAIR
+  accidentFree  Boolean   @default(true)
+  ownerCount    Int       @default(1)
+  city          String
+  state         String
+  features      String    @default("[]") // JSON string[]
+  images        String    @default("[]") // JSON string[]
+  sourceRef     String?   // external source reference (e.g. sellcarintl ref)
+  sourceUrl     String?   // external source URL
+  views         Int       @default(0)
+  soldPrice     Int?
+  soldAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  favorites     Favorite[]
+  conversations Conversation[]
+  offers        Offer[]
+  inspection    Inspection?
+  testDrives    TestDrive[]
+
+  @@index([status, make])
+  @@index([status, price])
+  @@index([sellerId])
+}
+
+model Favorite {
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@id([userId, listingId])
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  listingId String
+  buyerId   String
+  createdAt DateTime  @default(now())
+  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer     User      @relation("BuyerConversations", fields: [buyerId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@unique([listingId, buyerId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+model Offer {
+  id            String   @id @default(cuid())
+  listingId     String
+  buyerId       String
+  amount        Int
+  message       String?
+  status        String   @default("PENDING") // PENDING | ACCEPTED | REJECTED | COUNTERED | WITHDRAWN
+  counterAmount Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  listing       Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer         User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([buyerId])
+}
+
+model Inspection {
+  id          String    @id @default(cuid())
+  listingId   String    @unique
+  inspectorId String?
+  type        String    @default("MOBILE") // VIRTUAL | MOBILE | CENTER
+  status      String    @default("REQUESTED") // REQUESTED | SCHEDULED | COMPLETED
+  score       Int? // 0-100
+  summary     String?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  inspector   User?     @relation("InspectorJobs", fields: [inspectorId], references: [id])
+}
+
+model TestDrive {
+  id          String   @id @default(cuid())
+  listingId   String
+  buyerId     String
+  requestedAt DateTime
+  status      String   @default("REQUESTED") // REQUESTED | CONFIRMED | DECLINED | COMPLETED
+  createdAt   DateTime @default(now())
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer       User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model SavedSearch {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  query     String // serialized search params
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  targetType String?
+  targetId   String?
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// One-time email codes for signup verification and password reset.
+model AuthCode {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String
+  purpose   String // VERIFY | RESET
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose])
+}
