@@ -26,8 +26,8 @@ export function timeAgo(date: Date, locale: string = "en") {
   return rtf.format(0, "second");
 }
 
-export function formatMileage(miles: number, locale: string = "en") {
-  return `${miles.toLocaleString()} ${locale === "ar" ? "\u0645\u064a\u0644" : "mi"}`;
+export function formatMileage(km: number, locale: string = "en") {
+  return `${km.toLocaleString()} ${locale === "ar" ? "\u0643\u0645" : "km"}`;
 }
 
 /** Builds a deterministic placeholder image URL for a vehicle. */
