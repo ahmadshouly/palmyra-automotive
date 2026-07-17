@@ -30,9 +30,23 @@ export function formatMileage(km: number, locale: string = "en") {
   return `${km.toLocaleString()} ${locale === "ar" ? "\u0643\u0645" : "km"}`;
 }
 
-/** Builds a wa.me link from an admin-configured number, or null if unset/invalid. */
-export function whatsappLink(number: string | undefined | null, text?: string): string | null {
-  const digits = (number ?? "").replace(/[^\d]/g, "");
+/**
+ * Builds a WhatsApp link. Accepts either a full link pasted by the admin
+ * (e.g. https://wa.me/... or a wa.me short link) — used as-is — or a phone
+ * number, which is turned into a wa.me link. Returns null when unset/invalid.
+ */
+export function whatsappLink(value: string | undefined | null, text?: string): string | null {
+  const raw = (value ?? "").trim();
+  if (!raw) return null;
+
+  // A full link pasted from WhatsApp — use it directly.
+  if (/^https?:\/\//i.test(raw)) {
+    if (text && !raw.includes("?")) return `${raw}?text=${encodeURIComponent(text)}`;
+    return raw;
+  }
+
+  // Otherwise treat it as a phone number.
+  const digits = raw.replace(/[^\d]/g, "");
   if (digits.length < 6) return null;
   const query = text ? `?text=${encodeURIComponent(text)}` : "";
   return `https://wa.me/${digits}${query}`;
