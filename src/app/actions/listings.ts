@@ -108,6 +108,8 @@ export async function createListingAction(formData: FormData) {
   const ownerCount = Math.min(Math.max(num("ownerCount") || 1, 1), 15);
   const sourceRef = str("sourceRef") || null;
   const sourceUrl = str("sourceUrl") || null;
+  const titleAr = str("titleAr") || null;
+  const descriptionAr = str("descriptionAr") || null;
 
   const fail = (msg: string) => redirect(`/sell?error=${encodeURIComponent(msg)}`);
 
@@ -139,6 +141,8 @@ export async function createListingAction(formData: FormData) {
       sellerId: user.id,
       title,
       description,
+      titleAr,
+      descriptionAr,
       status: "ACTIVE", // admin-created listings are published immediately
       tier,
       price,
@@ -224,6 +228,8 @@ export async function updateListingAction(listingId: string, formData: FormData)
   const features = formData.getAll("features").map(String).slice(0, 40);
   const accidentFree = formData.get("accidentFree") === "on";
   const ownerCount = Math.min(Math.max(num("ownerCount") || 1, 1), 15);
+  const titleAr = str("titleAr") || null;
+  const descriptionAr = str("descriptionAr") || null;
 
   const fail = (msg: string) =>
     redirect(`/listings/${listingId}/edit?error=${encodeURIComponent(msg)}`);
@@ -264,6 +270,8 @@ export async function updateListingAction(listingId: string, formData: FormData)
     data: {
       title,
       description,
+      titleAr,
+      descriptionAr,
       tier,
       price,
       vin,

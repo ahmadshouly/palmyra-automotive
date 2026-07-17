@@ -44,6 +44,8 @@ model Listing {
   seller        User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   title         String
   description   String
+  titleAr       String?
+  descriptionAr String?
   status        String    @default("PENDING") // DRAFT | PENDING | ACTIVE | SOLD | REJECTED | ARCHIVED
   tier          String    @default("FREE") // FREE | PREMIUM | ULTIMATE
   rejectReason  String?

@@ -32,6 +32,8 @@ export type ListingInitial = {
   accidentFree: boolean;
   title: string;
   description: string;
+  titleAr: string | null;
+  descriptionAr: string | null;
   vin: string | null;
   price: number;
   city: string;
@@ -61,6 +63,7 @@ export default function SellForm({
   const [importMeta, setImportMeta] = useState<{ ref?: string; url?: string }>({});
   const [duplicate, setDuplicate] = useState<{ listingId: string; title: string; status: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [translating, setTranslating] = useState(false);
 
   function setField(name: string, value: string | number | null | undefined) {
     if (value === null || value === undefined || value === "") return;
@@ -76,6 +79,36 @@ export default function SellForm({
     boxes?.forEach((box) => {
       box.checked = set.has(box.value);
     });
+  }
+
+  async function autoTranslate() {
+    const form = formRef.current;
+    if (!form) return;
+    const readValue = (name: string) => {
+      const el = form.elements.namedItem(name);
+      return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el.value.trim() : "";
+    };
+    const title = readValue("title");
+    const description = readValue("description");
+    if (!title && !description) return;
+    setTranslating(true);
+    try {
+      const translate = async (text: string) => {
+        if (!text) return "";
+        const res = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, target: "ar" }),
+        });
+        const data = await res.json();
+        return typeof data.translation === "string" ? data.translation : "";
+      };
+      const [titleAr, descriptionAr] = await Promise.all([translate(title), translate(description)]);
+      if (titleAr) setField("titleAr", titleAr);
+      if (descriptionAr) setField("descriptionAr", descriptionAr);
+    } finally {
+      setTranslating(false);
+    }
   }
 
   // Prefill every field when editing an existing listing.
@@ -99,6 +132,8 @@ export default function SellForm({
       ["ownerCount", initial.ownerCount],
       ["title", initial.title],
       ["description", initial.description],
+      ["titleAr", initial.titleAr],
+      ["descriptionAr", initial.descriptionAr],
       ["vin", initial.vin],
       ["price", initial.price],
       ["city", initial.city],
@@ -402,6 +437,24 @@ export default function SellForm({
           <div>
             <label className="label">{t("sell.desc")} *</label>
             <textarea name="description" required minLength={20} rows={6} className="input" placeholder={t("sell.descPh")} />
+          </div>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-emerald-900">{t("sell.translateHint")}</p>
+              <button type="button" onClick={autoTranslate} disabled={translating} className="btn-outline btn-sm">
+                {translating ? t("sell.translating") : t("sell.autoTranslate")}
+              </button>
+            </div>
+            <div className="mt-3 space-y-3">
+              <div>
+                <label className="label">{t("sell.titleAr")}</label>
+                <input name="titleAr" className="input" dir="rtl" />
+              </div>
+              <div>
+                <label className="label">{t("sell.descAr")}</label>
+                <textarea name="descriptionAr" rows={5} className="input" dir="rtl" />
+              </div>
+            </div>
           </div>
           <div>
             <label className="label">{t("detail.features")}</label>

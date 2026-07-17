@@ -79,6 +79,11 @@ export default async function AdminSettingsPage() {
             <label className="label">{t("admin.settings.supportEmail")}</label>
             <input name="supportEmail" type="email" defaultValue={settings.supportEmail} className="input" />
           </div>
+          <div>
+            <label className="label">{t("admin.settings.whatsapp")}</label>
+            <input name="whatsappNumber" defaultValue={settings.whatsappNumber} className="input" placeholder={t("admin.settings.whatsappPh")} dir="ltr" />
+            <p className="mt-1 text-xs text-emerald-600">{t("admin.settings.whatsappHint")}</p>
+          </div>
         </div>
 
         <label className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">

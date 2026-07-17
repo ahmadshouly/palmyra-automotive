@@ -52,6 +52,8 @@ export default async function EditListingPage({
     accidentFree: listing.accidentFree,
     title: listing.title,
     description: listing.description,
+    titleAr: listing.titleAr,
+    descriptionAr: listing.descriptionAr,
     vin: listing.vin,
     price: listing.price,
     city: listing.city,

@@ -16,6 +16,7 @@ export const SETTING_DEFAULTS = {
   transactionFeePct: "4",
   currency: "USD",
   supportEmail: "support@example.com",
+  whatsappNumber: "",
   maintenanceMode: "0",
 } as const;
 

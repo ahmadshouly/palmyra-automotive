@@ -19,7 +19,8 @@ export default async function ListingCard({
   const locale = getLocale();
   const t = getT();
   const images = parseJsonArray(listing.images);
-  const cover = images[0] ?? `/api/placeholder?label=${encodeURIComponent(listing.title)}&seed=${listing.id}`;
+  const displayTitle = locale === "ar" && listing.titleAr ? listing.titleAr : listing.title;
+  const cover = images[0] ?? `/api/placeholder?label=${encodeURIComponent(displayTitle)}&seed=${listing.id}`;
 
   return (
     <Link
@@ -48,7 +49,7 @@ export default async function ListingCard({
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
           <h3 className="line-clamp-1 font-semibold text-emerald-950 group-hover:text-brand-700">
-            {listing.title}
+            {displayTitle}
           </h3>
         </div>
         <p className="mt-1 text-lg font-bold text-emerald-950">{formatMoney(listing.price, currency)}</p>
